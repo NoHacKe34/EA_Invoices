@@ -1,4 +1,4 @@
-name: Build Standalone Application
+name: Compile 4D Project
 
 on:
   workflow_dispatch:
@@ -11,19 +11,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Compile and Build 4D Standalone
+      - name: Compile and Pack 4D Project
         uses: 4d/build4d-action@v1
         with:
           project: 'Project/Invoices.4DProject'
-          targets: 'standalone'
+          targets: 'x86_64_generic'
+          actions: 'build,pack,archive'
           product-line: '20.x'
           version: '20.3'
 
-      - name: Upload Built Application as Artifact
+      - name: Upload Compiled Package
         uses: actions/upload-artifact@v4
         with:
-          name: EA_Invoices-Windows
+          name: Invoices-Compiled
           path: |
-            Build/
-            BuiltApplication/
+            **/*.4dz
+            **/*.zip
           if-no-files-found: error
