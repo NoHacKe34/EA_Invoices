@@ -1,7 +1,7 @@
 name: Build Standalone Application
 
 on:
-  workflow_dispatch: # Permet de lancer la compilation manuellement en 1 clic
+  workflow_dispatch:
 
 jobs:
   build-windows:
@@ -14,12 +14,16 @@ jobs:
       - name: Compile and Build 4D Standalone
         uses: 4d/build4d-action@v1
         with:
-          project-path: 'Project/EA_Invoices.4DProject'
-          target: 'standalone'
-          output-name: 'EA_Invoices_App'
+          project: 'Project/EA_Invoices.4DProject'
+          targets: 'standalone'
+          product-line: '20.x'
+          version: '20.3'
 
       - name: Upload Built Application as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: EA_Invoices-Windows
-          path: ./BuiltApplication/
+          path: |
+            Build/
+            BuiltApplication/
+          if-no-files-found: error
