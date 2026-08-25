@@ -14,7 +14,7 @@ jobs:
       - name: Compile and Build 4D Standalone
         uses: 4d/build4d-action@v1
         with:
-          project: 'Project/EA_Invoices.4DProject'
+          project: 'Project/Invoices.4DProject'
           targets: 'standalone'
           product-line: '20.x'
           version: '20.3'
