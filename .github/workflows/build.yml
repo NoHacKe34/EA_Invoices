@@ -11,20 +11,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Compile and Pack 4D Project
+      - name: Compile 4D Project
         uses: 4d/build4d-action@v1
         with:
           project: 'Project/Invoices.4DProject'
           targets: 'x86_64_generic'
-          actions: 'build,pack,archive'
           product-line: '20.x'
           version: '20.3'
 
-      - name: Upload Compiled Package
+      - name: Upload Compiled Project as Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Invoices-Compiled
-          path: |
-            **/*.4dz
-            **/*.zip
+          name: EA_Invoices-Compiled
+          path: .
           if-no-files-found: error
