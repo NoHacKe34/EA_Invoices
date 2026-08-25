@@ -1,27 +1,73 @@
-name: Compile 4D Project
+name: Build Standalone Windows EXE
 
 on:
   workflow_dispatch:
 
 jobs:
-  build-windows:
+  build-exe:
     runs-on: windows-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Compile 4D Project
-        uses: 4d/build4d-action@v1
-        with:
-          project: 'Project/Invoices.4DProject'
-          targets: 'x86_64_generic'
-          product-line: '20.x'
-          version: '20.3'
+      - name: Download tool4d and 4D Volume Desktop
+        shell: bash
+        run: |
+          mkdir -p engine
+          mkdir -p tool4d_bin
+          
+          # Téléchargement de tool4d
+          curl -L -o tool4d.tar.xz "https://resources-download.4d.com/release/20.x/20.3/latest/win/tool4d_win.tar.xz"
+          tar -xf tool4d.tar.xz -C tool4d_bin
+          
+          # Téléchargement du runtime 4D Volume Desktop
+          curl -L -o desktop.tar.xz "https://resources-download.4d.com/release/20.x/20.3/latest/win/4D_Volume_Desktop_win.tar.xz"
+          tar -xf desktop.tar.xz -C engine
 
-      - name: Upload Compiled Project as Artifact
+      - name: Clone Build4D Component
+        shell: bash
+        run: |
+          mkdir -p BuildProject/Project/Components/
+          git clone https://github.com/4d/Build4D.git BuildProject/Project/Components/Build4D.4dbase
+
+      - name: Create Build 4D Project Script
+        shell: bash
+        run: |
+          mkdir -p BuildProject/Project/Sources/Methods
+          
+          cat << 'EOF' > BuildProject/Project/BuildProject.4DProject
+          {
+            "version": "1.0"
+          }
+          EOF
+
+          cat << 'EOF' > BuildProject/Project/Sources/Methods/BuildApp.4dm
+          #DECLARE()
+          var $build : cs.Build4D.Standalone
+          var $settings : Object
+          var $success : Boolean
+
+          $settings:=New object
+          $settings.projectFile:=File("/PACKAGE/../../Project/Invoices.4DProject")
+          $settings.destinationFolder:=Folder("/PACKAGE/../../Dist/")
+          $settings.destinationName:="EA_Invoices"
+          $settings.source4DVolumeDesktopFolder:=Folder("/PACKAGE/../../engine/4D Volume Desktop/4D Volume Desktop.4dbase/")
+
+          $build:=cs.Build4D.Standalone.new($settings)
+          $success:=$build.build()
+
+          QUIT 4D
+          EOF
+
+      - name: Execute Standalone Generation with tool4d
+        shell: cmd
+        run: |
+          tool4d_bin\tool4d.exe --project="%CD%\BuildProject\Project\BuildProject.4DProject" --startup-method="BuildApp"
+
+      - name: Upload Standalone EXE Application
         uses: actions/upload-artifact@v4
         with:
-          name: EA_Invoices-Compiled
-          path: .
+          name: EA_Invoices-Standalone-Windows
+          path: Dist/
           if-no-files-found: error
